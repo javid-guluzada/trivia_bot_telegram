@@ -1,0 +1,6 @@
+trivia_test.ipynb
+__pycache__/
+log.txt
+config.env
+*.session
+*.session-journal
