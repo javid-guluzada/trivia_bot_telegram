@@ -7,7 +7,7 @@ from pyrogram.types import (
 )
 from pyrogram.enums.chat_type import ChatType
 import json
-from utils.database.users_db import (
+from trivia_bot.utils.database.users_db import (
     reset_user,
     update_category,
     update_score,
@@ -16,14 +16,13 @@ from utils.database.users_db import (
     get_question_ids,
     get_score,
     get_current_question_id,
+    set_game_status,
 )
-from utils.helpers.get_question import get_question_by_category
+from trivia_bot.utils.helpers.get_question import get_question_by_category
 
 import random
 import asyncio
 
-with open("questions.json") as f:
-    questions = json.load(f)
 
 with open("trivia_categories.json") as f:
     trivia_categories = json.load(f)
@@ -52,10 +51,10 @@ async def play_game(_, message: Message):
 
             button_list.append([InlineKeyboardButton("Next", callback_data="next_1")])
 
-        await message.reply_text(
-            "Select a category to start the game.",
-            reply_markup=InlineKeyboardMarkup(button_list),
-        )
+            await message.reply_text(
+                "Select a category to start the game.",
+                reply_markup=InlineKeyboardMarkup(button_list),
+            )
     else:
         await message.reply_text("Please start a game in a private chat.")
 
@@ -101,6 +100,7 @@ async def category_selected(client: Client, callback: CallbackQuery):
     await callback.edit_message_text(
         f"Category selected successfully: {trivia_categories[category_id-9]['name']}"
     )
+    await set_game_status(callback.from_user.id, True)
     await send_question(client, category_id, chat_id)
 
 
@@ -122,10 +122,15 @@ async def send_question(client: Client, category_id: int, chat_id: int):
     question_ids = await get_question_ids(chat_id)
     question = get_question_by_category(category_id, question_ids)
     if question:
-        await update_question(chat_id, question._id)
-        options = question.incorrect_answers + [question.correct_answer]
-        random.shuffle(options)
         button_list = []
+        await update_question(chat_id, question._id)
+
+        if question.type == "boolean":
+            options = ["True", "False"]
+        else:
+            options = question.incorrect_answers + [question.correct_answer]
+            random.shuffle(options)
+
         for option in options:
             button_list.append(
                 [
