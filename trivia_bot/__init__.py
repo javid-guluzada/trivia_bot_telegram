@@ -1,7 +1,9 @@
+import json
+
 from logging import INFO, FileHandler, StreamHandler, basicConfig, getLogger
 from os import getenv, remove, path
 from dotenv import load_dotenv
-
+from trivia_bot.utils.helpers.category_model import TriviaCategory
 
 remove("log.txt")
 
@@ -39,3 +41,8 @@ else:
     client = AsyncIOMotorClient(DATABASE_URI)
     db = client[DATABASE_NAME]
     instance = Instance.from_db(db)
+
+
+with open("trivia_categories.json") as f:
+    data = json.load(f)
+    TRIVIA_CATEGORIES = [TriviaCategory.from_dict(category) for category in data]
