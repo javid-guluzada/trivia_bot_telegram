@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 class User(Document):
     user_id = fields.IntField(attribute="_id")
     is_game_active = fields.BooleanField(default=False)
-    score = fields.IntField(default=0)
+    correct_answers = fields.IntField(default=0)
+    wrong_answers = fields.IntField(default=0)
     category_id = fields.IntField(default=0)
     current_question_id = fields.IntField(default=0)
+    message_id = fields.IntField(default=0)
     questions_used = fields.ListField(fields.IntField(), default=[])
 
     class Meta:
@@ -33,9 +35,11 @@ async def add_user(user_id: int) -> User:
         user = User(
             user_id=user_id,
             is_game_active=False,
-            score=0,
+            correct_answers=0,
+            wrong_answers=0,
             category_id=0,
             current_question_id=0,
+            message_id=0,
             questions_used=[],
         )
         return await user.commit()
@@ -87,7 +91,7 @@ async def get_question_ids(user_id: int) -> list:
     return list(user.questions_used)
 
 
-async def get_score(user_id: int) -> int:
+async def get_score(user_id: int) -> tuple[int, int]:
     """
     Retrieves the score of a user.
 
@@ -98,7 +102,7 @@ async def get_score(user_id: int) -> int:
         int: The score of the user.
     """
     user = await get_user(user_id)
-    return user.score
+    return user.correct_answers, user.wrong_answers
 
 
 async def get_current_question_id(user_id: int) -> int:
@@ -137,9 +141,11 @@ async def reset_user(user_id: int):
     """
     user = await get_user(user_id)
     user.is_game_active = False
-    user.score = 0
+    user.correct_answers = 0
+    user.wrong_answers = 0
     user.category_id = 0
     user.current_question_id = 0
+    user.message_id = 0
     user.questions_used = []
     await user.commit()
 
@@ -158,7 +164,7 @@ async def update_question(user_id: int, question_id: int):
     await user.commit()
 
 
-async def update_score(user_id: int):
+async def update_score(user_id: int, is_correct: bool):
     """
     Updates a user's score.
 
@@ -166,7 +172,10 @@ async def update_score(user_id: int):
         user_id (int): The ID of the user to update.
     """
     user = await get_user(user_id)
-    user.score += 1
+    if is_correct:
+        user.correct_answers += 1
+    else:
+        user.wrong_answers += 1
     await user.commit()
 
 
@@ -180,3 +189,30 @@ async def update_category(user_id: int, category_id: int):
     """
     user = await get_user(user_id)
     user.category_id = category_id
+
+
+async def update_message_id(user_id: int, message_id: int):
+    """
+    Updates a user's selected category.
+
+    Args:
+        user_id (int): The ID of the user to update.
+        message_id (int): The ID of the new category.
+    """
+    user = await get_user(user_id)
+    user.message_id = message_id
+    await user.commit()
+
+
+async def get_message_id(user_id: int) -> int:
+    """
+    Retrieves the message ID for a user.
+
+    Args:
+        user_id (int): The ID of the user to retrieve the message ID for.
+
+    Returns:
+        int: The message ID for the user.
+    """
+    user = await get_user(user_id)
+    return user.message_id
