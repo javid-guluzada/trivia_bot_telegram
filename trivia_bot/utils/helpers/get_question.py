@@ -2,12 +2,10 @@ import json
 import random
 from trivia_bot.utils.helpers.question_model import Question
 
-questions = []
+
 with open("questions.json") as f:
     data = json.load(f)
-    for item in data:
-        question = Question.from_dict(item)
-        questions.append(question)
+    questions = [Question.from_dict(question) for question in data]
 
 
 def get_question_by_category(
