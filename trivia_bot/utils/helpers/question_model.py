@@ -67,3 +67,18 @@ class Question:
             data["correct_answer"],
             data["incorrect_answers"],
         )
+
+    def to_dict(self) -> dict:
+        """
+        Converts the Question object to a dictionary.
+        """
+        return {
+            "_id": self._id,
+            "category_id": self.category_id,
+            "type": self.type,
+            "difficulty": self.difficulty,
+            "category": self.category,
+            "question": self.question,
+            "correct_answer": self.correct_answer,
+            "incorrect_answers": self.incorrect_answers,
+        }
